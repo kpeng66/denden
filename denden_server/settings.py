@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'corsheaders',
-
+    'channels',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
@@ -80,7 +82,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "content-type",
-    "authorization"
+    "authorization",
+    "room_code"
 ]
 
 ROOT_URLCONF = 'denden_server.urls'
@@ -101,7 +104,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'denden_server.wsgi.application'
+# WSGI_APPLICATION = 'denden_server.wsgi.application'
+ASGI_APPLICATION = "denden_server.asgi.application"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
 
 
 # Database

@@ -1,16 +1,33 @@
 from django.shortcuts import render
 from rest_framework import generics, status
-from .serializers import RoomSerializer, CreateRoomSerializer, UpdateRoomSerializer
-from .models import Room
+from .serializers import RoomSerializer, CreateRoomSerializer, UpdateRoomSerializer, UserProfileSerializer, UserSerializer
+from .models import Room, UserProfile
+from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from utils import get_users_in_room
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
+from .models import Room, MathGame
 
+class CurrentUser(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user_data = {
+            'id': request.user.id,
+            'username': request.user.username,
+        }
+        
+        return Response(user_data)
+    
 class RoomView(generics.ListAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
-
 
 class GetRoom(APIView):
     serializer_class = RoomSerializer
@@ -29,22 +46,29 @@ class GetRoom(APIView):
         return Response({'Bad Request': 'Code Parameter Not Found in Request'}, status=status.HTTP_400_BAD_REQUEST)
     
 class JoinRoom(APIView):
-    lookup_url_kwarg = 'code'
-
     def post(self, request, format=None):
-        if not self.request.session.exists(self.request.session.session_key):
-            self.request.session.create()
-
-        code = request.data.get(self.lookup_url_kwarg)
+        code = request.data.get('room_code')
         if code != None:
             room_result = Room.objects.filter(code=code)
             if len(room_result) > 0:
                 room = room_result[0]
-                self.request.session['room_code'] = code
+                profile = request.user.userprofile
+                profile.current_room = room
+                profile.save()
+
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'room_{code}',
+                    {
+                        'type': 'user_update',
+                        'room_code': code,
+                        'message': 'A new user has joined the room!'
+                    }
+                )
+
                 return Response({'message': 'Room Joined!'}, status=status.HTTP_200_OK)
             return Response({'Bad Request': 'Invalid Room Code'}, status=status.HTTP_400_BAD_REQUEST)
 
-            
         return Response({'Bad Request': 'Invalid post data, did not find a code key'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -52,22 +76,23 @@ class CreateRoomView(APIView):
     serializer_class = CreateRoomSerializer
 
     def post(self, request, format=None):
-        print("hit")
-        if not self.request.session.exists(self.request.session.session_key):
-            self.request.session.create()
-        
+        print("create-room HIT!")
         serializer = self.serializer_class(data=request.data)
+
         if serializer.is_valid():
-            host = self.request.data.get('host')
-            queryset = Room.objects.filter(host=host)
+            print(self.request.data)
+            host_id = self.request.data['host']['id']
+            host_user = User.objects.get(id=host_id)
+            queryset = Room.objects.filter(host=host_user)
             if queryset.exists():
                 room = queryset[0]
-                self.request.session['room_code'] = room.code
                 return Response(RoomSerializer(room).data, status=status.HTTP_200_OK)
             else:
-                room = Room(host=host)
+                room = Room(host=host_user)
                 room.save()
-                self.request.session['room_code'] = room.code
+                user_profile = UserProfile.objects.get(user=host_user)
+                user_profile.current_room = room
+                user_profile.save()
                 return Response(RoomSerializer(room).data, status=status.HTTP_201_CREATED)
         return Response(RoomSerializer(room).data, status=status.HTTP_400_BAD_REQUEST)
     
@@ -82,14 +107,38 @@ class UserInRoom(APIView):
         return JsonResponse(data, status=status.HTTP_200_OK)
     
 class LeaveRoom(APIView):
+    permissionClasses = [IsAuthenticated]
     def post(self, request, format=None):
-        if 'room_code' in self.request.session:
-            self.request.session.pop('room_code')
-            host_id = self.request.session.session_key
-            room_results = Room.objects.filter(host=host_id)
-            if room_results.exists():
-                room = room_results[0]
+        user = request.user
+        code = request.data.get('room_code', None)
+        if not code:
+            return Response({'Error': 'Room code is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user_profile = user.userprofile
+
+        if user_profile.current_room:
+            if user_profile.current_room.host == user:
+                room = user_profile.current_room
                 room.delete()
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'room_{code}',
+                    {
+                        'type': 'room_closed',
+                        'message': 'The host has left and the room has been closed.'
+                    }
+                )
+            else:
+                user_profile.current_room = None
+                user_profile.save()
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'room_{code}',
+                    {
+                        'type': 'user_update',
+                        'room_code': code,
+                        'message': 'A user has left the room!'
+                    }
+                )
 
         return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
     
@@ -119,3 +168,27 @@ class UpdateRoom(APIView):
             return Response(RoomSerializer(room).data, status=status.HTTP_200_OK)
 
         return Response({'Bad Request': 'Invalid Data...'}, status=status.HTTP_400_BAD_REQUEST)
+    
+class UsersInRoom(APIView):
+    def get(self, request, room_code, format=None):
+        data = get_users_in_room(room_code)
+        return Response(data, status=status.HTTP_200_OK)
+
+class StartGame(APIView): 
+    def post(self, request, room_code):
+        try:
+            room = Room.objects.get(code=room_code)
+            if not room:
+                return JsonResponse({"error": "Room not found"}, status=404)
+
+            game = MathGame(user=request.user)
+            game.save()
+
+            # Link the game to the room
+            room.current_game = game
+            room.save()
+
+            return JsonResponse({"message": "Game started"}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
