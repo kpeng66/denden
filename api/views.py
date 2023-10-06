@@ -13,6 +13,7 @@ from asgiref.sync import async_to_sync
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from .models import Room, MathGame
+import random, json
 
 class CurrentUser(APIView):
     permission_classes = [IsAuthenticated]
@@ -191,4 +192,24 @@ class StartGame(APIView):
             return JsonResponse({"message": "Game started"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
+
+
+def get_new_equation(request):
+    num1 = random.randint(1, 10)
+    num2 = random.randint(1, 10)
+        
+    return JsonResponse({
+        'equation': f'{num1} + {num2}',
+        'answer': num1 + num2
+    })
+
+def check_answer(self, request):
+    data = json.loads(request.body)
+    user_answer = data.get('answer')
+
+    if user_answer == True:
+        return JsonResponse({'correct': True})
+    else:
+        return JsonResponse({'correct': False})
 
