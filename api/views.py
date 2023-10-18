@@ -10,6 +10,9 @@ from utils import get_users_in_room
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+import ast
+import operator
+
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from .models import Room, MathGame
@@ -96,17 +99,7 @@ class CreateRoomView(APIView):
                 user_profile.save()
                 return Response(RoomSerializer(room).data, status=status.HTTP_201_CREATED)
         return Response(RoomSerializer(room).data, status=status.HTTP_400_BAD_REQUEST)
-    
-class UserInRoom(APIView):
-    def get(self, request, format=None):
-        if not self.request.session.exists(self.request.session.session_key):
-            self.request.session.create()
 
-        data = {
-            'code': self.request.session.get('room_code')
-        }
-        return JsonResponse(data, status=status.HTTP_200_OK)
-    
 class LeaveRoom(APIView):
     permissionClasses = [IsAuthenticated]
     def post(self, request, format=None):
@@ -192,24 +185,77 @@ class StartGame(APIView):
             return JsonResponse({"message": "Game started"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-
-
-
-def get_new_equation(request):
-    num1 = random.randint(1, 10)
-    num2 = random.randint(1, 10)
         
-    return JsonResponse({
-        'equation': f'{num1} + {num2}',
-        'answer': num1 + num2
-    })
+class UserInARoom(APIView):
+    def post(self, request):
+            try:
+                data = json.loads(request.body)
+                username = data.get('username')
 
-def check_answer(self, request):
-    data = json.loads(request.body)
-    user_answer = data.get('answer')
+                user = User.objects.get(username=username)
+                user_profile = UserProfile.objects.get(user=user)
+                in_room = user_profile.current_room is not None
 
-    if user_answer == True:
-        return JsonResponse({'correct': True})
-    else:
-        return JsonResponse({'correct': False})
+                if in_room:
+                    return JsonResponse({
+                        'in_room': True,
+                        'room_code': user_profile.current_room.code
+                    })
+                else:
+                    return JsonResponse({'in_room': False})
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=404)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+
+class GenerateEquation(APIView):
+    def get(self, request):
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, 10)
+            
+        return JsonResponse({
+            'equation': f'{num1} + {num2}',
+            'answer': num1 + num2
+        })
+
+class HandleAnswer(APIView):
+    def post(self, request):
+        user_answer = request.data.get('user_answer')
+        original_equation = request.data.get('original_equation')
+
+        correct = self.check_equation_answer(original_equation, user_answer)
+
+        if correct:
+            return Response({'result': 'correct'})
+        else:
+            return Response({'result': 'incorrect'})
+    
+    def check_equation_answer(self, equation, answer):
+        try:
+            result = self.safe_eval(equation)
+
+            return result == float(answer)
+        except:
+            return False
+    
+    def safe_eval(self, expr):
+        bin_ops = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+            ast.Pow: operator.pow,
+        }
+
+        def _eval(node):
+            if isinstance(node, ast.Num):
+                return node.n
+            elif isinstance(node, ast.BinOp):
+                left = _eval(node.left)
+                right = _eval(node.right)
+                return bin_ops[type(node.op)](left, right)
+            else:
+                raise ValueError
+        return _eval(ast.parse(expr, mode='eval').body)
+                
 
