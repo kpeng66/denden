@@ -207,6 +207,18 @@ class UserInARoom(APIView):
                 return JsonResponse({'error': 'User not found'}, status=404)
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=500)
+            
+class HostDetails(APIView):
+    def get(self, request, *args, **kwargs):
+        room_code = kwargs.get('room_code')
+        try:
+            room = Room.objects.get(code=room_code)
+            host_id = room.host.id
+            return Response({'host_id': host_id}, status=status.HTTP_200_OK)
+        except Room.DoesNotExist:
+            return Response({'error: Room Not Found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GenerateEquation(APIView):
     def get(self, request):

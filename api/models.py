@@ -23,22 +23,19 @@ class Room(models.Model):
     object_id = models.PositiveIntegerField(null=True)
     current_game = GenericForeignKey('content_type', 'object_id')
 
-class Game(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-
-    class Meta:
-        abstract = True
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="userprofile")
+    current_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, related_name="members")
 
 class MathGame(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.PositiveIntegerField(default=0)
     game_status = models.CharField(choices=[('WAITING', 'Waiting'), ('IN_PROGRESS', 'In Progress'), ('FINISHED', 'Finished')], default='WAITING', max_length=15)
 
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="userprofile")
-    current_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, related_name="members")
+class GameScore(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    game = models.ForeignKey(MathGame, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
     
 
 
