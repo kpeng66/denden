@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from utils import get_users_in_room
+from django.shortcuts import get_object_or_404
 
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -15,7 +16,7 @@ import operator
 
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
-from .models import Room, MathGame
+from .models import Room, MathGame, GameScore, User, Game
 import random, json
 
 class CurrentUser(APIView):
@@ -269,5 +270,34 @@ class HandleAnswer(APIView):
             else:
                 raise ValueError
         return _eval(ast.parse(expr, mode='eval').body)
+    
+
+# Endpoint to update a player's score
+class UpdatePlayerScore(APIView):
+    def post(self, request, format=None):
+        user_id = request.data.get('user_id')
+        game_id = request.data.get('game_id')
+        new_score = request.data.get('score')
+
+        if not all([user_id, game_id, new_score]):
+            return Response({"error: ": "Missing data in request"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = get_object_or_404(User, pk=user_id)
+        game =  get_object_or_404(Game, pk=game.id)
+
+        game_score, created = GameScore.objects.update_or_create(
+            user=user,
+            game=game,
+            defaults={'score': new_score}
+        )
+
+        return Response({"message": "Score updated successfully"}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+# Endpoint to retrive all players' scores for a game
                 
 
