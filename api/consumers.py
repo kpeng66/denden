@@ -30,13 +30,6 @@ class MathGameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
     
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message_type = text_data_json.get('type')
-
-        # Placeholder for handling received messages from WebSocket
-        # You might handle player actions here
-    
     async def start_game(self):
         game_prepare_time = 3
         

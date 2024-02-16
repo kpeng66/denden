@@ -16,7 +16,7 @@ import operator
 
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
-from .models import Room, MathGame, GameScore, User, Game
+from .models import Room, MathGame, GameScore, User, Game, ContentType
 import random, json
 
 class CurrentUser(APIView):
@@ -271,31 +271,39 @@ class HandleAnswer(APIView):
                 raise ValueError
         return _eval(ast.parse(expr, mode='eval').body)
     
+# Endpoint to instantiate a math game
+class StartMathGame(APIView):
+    def post(self, request):
+        try:
+            room_code = request.data.get('room_code', None)
+            room = Room.objects.get(code=room_code)
+
+            if request.user != room.host:
+                return JsonResponse({'error': 'Only the room host can start the game'}, status=403)
+            
+            math_game = MathGame.objects.create(room=room, name="Math Game")
+
+            return JsonResponse({'message': 'Math game started successfully', 'game_id': math_game.id})
+        except Room.DoesNotExist:
+            return JsonResponse({'error': 'Room not found'}, status=404)
 
 # Endpoint to update a player's score
 class UpdatePlayerScore(APIView):
-    def post(self, request, format=None):
-        user_id = request.data.get('user_id')
-        game_id = request.data.get('game_id')
-        new_score = request.data.get('score')
+    def post(self, request, game_id):
+        user = request.user
+        new_score = request.POST.get('score')
 
-        if not all([user_id, game_id, new_score]):
-            return Response({"error: ": "Missing data in request"}, status=status.HTTP_400_BAD_REQUEST)
+        math_game = MathGame.objects.get(id=game_id)
 
-        user = get_object_or_404(User, pk=user_id)
-        game =  get_object_or_404(Game, pk=game.id)
-
+        content_type = ContentType.objects.get_for_model(MathGame)
         game_score, created = GameScore.objects.update_or_create(
             user=user,
-            game=game,
+            content_type = content_type,
+            object_id=math_game.id,
             defaults={'score': new_score}
         )
 
-        return Response({"message": "Score updated successfully"}, status=status.HTTP_200_OK)
-
-
-
-
+        return JsonResponse({'message': 'Score updated successfully'})
 
 
 # Endpoint to retrive all players' scores for a game
