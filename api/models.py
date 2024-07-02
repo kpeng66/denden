@@ -24,6 +24,7 @@ class Room(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="userprofile")
     current_room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, related_name="members")
+    score = models.IntegerField(default=0)
 
 class Game(models.Model):
     name = models.CharField(max_length=100)
@@ -36,27 +37,9 @@ class Game(models.Model):
 class MathGame(Game):
     def __str__(self):
         return f"MathGame in Room: {self.room.code}"
+    
 
-class GameScore(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    game = GenericForeignKey('content_type', 'object_id')
-    score = models.IntegerField(default=0)
 
-class GameSession(models.Model):
-    games = GenericRelation('GameSessionGame')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class GameSessionGame(models.Model):
-    session = models.ForeignKey(GameSession, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    game = GenericForeignKey('content_type', 'object_id')
-
-class Leaderboard(models.Model):
-    game_session = models.ForeignKey(GameSession, on_delete=models.CASCADE)
-    scores = models.JSONField()
     
 
 

@@ -9,6 +9,7 @@ from utils import get_users_in_room
 from django.shortcuts import get_object_or_404
 
 from channels.layers import get_channel_layer
+
 from asgiref.sync import async_to_sync
 
 import ast
@@ -16,7 +17,7 @@ import operator
 
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
-from .models import Room, MathGame, GameScore, User, Game, ContentType
+from .models import Room, User, ContentType, Game, MathGame
 import random, json
 
 class CurrentUser(APIView):
@@ -187,6 +188,31 @@ class StartGame(APIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
         
+class StartMathGame(APIView):
+    def post(self, request):
+        room_code = request.data.get('room_code')
+        if not room_code:
+            return Response({'error': 'Room code is required'}, status=500)
+
+        try:
+            room = Room.objects.get(code=room_code, host=request.user)
+            if not room:
+                return Response({'error': 'Room not found'}, status=404)
+            if room.host != request.user:
+                return Response({'error': 'Only the room host can start the game'}, status=403)
+            
+            if MathGame.objects.filter(room=room).exists():
+                return Response({'error': 'A game is already active in this room'}, status=400)
+            else:
+                new_game = MathGame.objects.create(room=room, name='New Math Game')
+
+            return Response({'message': 'Game started successfully', 'game_id': new_game.id})
+        except Room.DoesNotExist:
+            return Response({'error': 'Invalid room code'}, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+        
 class UserInARoom(APIView):
     def post(self, request):
             try:
@@ -270,42 +296,27 @@ class HandleAnswer(APIView):
             else:
                 raise ValueError
         return _eval(ast.parse(expr, mode='eval').body)
-    
-# Endpoint to instantiate a math game
-class StartMathGame(APIView):
-    def post(self, request):
-        try:
-            room_code = request.data.get('room_code', None)
-            room = Room.objects.get(code=room_code)
-
-            if request.user != room.host:
-                return JsonResponse({'error': 'Only the room host can start the game'}, status=403)
-            
-            math_game = MathGame.objects.create(room=room, name="Math Game")
-
-            return JsonResponse({'message': 'Math game started successfully', 'game_id': math_game.id})
-        except Room.DoesNotExist:
-            return JsonResponse({'error': 'Room not found'}, status=404)
 
 # Endpoint to update a player's score
 class UpdatePlayerScore(APIView):
-    def post(self, request, game_id):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         user = request.user
-        new_score = request.POST.get('score')
+        new_score = request.data.get('score')
 
-        math_game = MathGame.objects.get(id=game_id)
+        userProfile = UserProfile.objects.get(user=user)
 
-        content_type = ContentType.objects.get_for_model(MathGame)
-        game_score, created = GameScore.objects.update_or_create(
-            user=user,
-            content_type = content_type,
-            object_id=math_game.id,
-            defaults={'score': new_score}
-        )
+        if userProfile is not None:
+            if new_score is not None:
+                try:
+                    new_score = int(new_score)
+                    userProfile.score = new_score
+                    userProfile.save()
 
-        return JsonResponse({'message': 'Score updated successfully'})
-
-
-# Endpoint to retrive all players' scores for a game
-                
+                    return JsonResponse({'message': 'Score updated successfully'})
+                except ValueError:
+                    return JsonResponse({'message': 'Invalid score format'}, status=400)
+            else:
+                return JsonResponse({'message': 'No score provided'}, status=400)
 

@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
-from api.models import GameScore
 from api.serializers import UserSerializer
 from asgiref.sync import async_to_sync
 import time
@@ -76,8 +75,7 @@ class MathGameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_scores(self):
-        scores = GameScore.objects.filter(room_code = self.room_code).values('user__username', 'score')
-        return list(scores)
+        pass
     
     async def game_scores(self, event):
         await self.send(text_data=json.dumps({

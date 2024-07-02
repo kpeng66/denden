@@ -1,0 +1,6 @@
+node_modules/
+__pycache__/
+env/
+api/__pycache__/
+denden_frontend/.next/
+denden_server/__pycache__/
