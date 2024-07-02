@@ -1,0 +1,72 @@
+.gameContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #007aff; /* Blue background */
+  height: 100vh; /* Full height of the viewport */
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
+.timerContainer {
+  background-color: #000;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.timer {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.score {
+  font-size: 5em;
+  margin: 20px 0;
+}
+
+.prompt {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+.equation {
+  font-size: 4em;
+  margin: 20px 0;
+  background-color: #f1c40f; /* Yellow color */
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.inputValue {
+  font-size: 3em;
+  min-height: 50px;
+  margin-bottom: 20px;
+  background-color: #ffd700; /* Golden color */
+  width: 60%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.numberPad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 columns grid */
+  gap: 10px;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.numberButton {
+  background-color: white;
+  border: 2px solid #ddd;
+  padding: 20px;
+  font-size: 2em;
+  color: black;
+  border-radius: 10px;
+}
+
+.numberButton:active {
+  background-color: #e6e6e6;
+}

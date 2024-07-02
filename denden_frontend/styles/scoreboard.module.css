@@ -1,0 +1,44 @@
+.scoreboardContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #1a1a2e; /* Dark background */
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.scoreList {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.playerScore {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    background-color: #0f3460; /* Contrast background */
+    border-radius: 4px;
+}
+
+.playerName {
+    font-size: 1.2rem;
+}
+
+.playerScoreValue {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
