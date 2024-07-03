@@ -9,9 +9,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'first_name', 'last_name', 'email')
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = UserProfile
-        fields = ('user', 'current_room')
+        fields = ('user_name', 'score')
 
 class RoomSerializer(serializers.ModelSerializer):
     class Meta:

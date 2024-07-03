@@ -24,6 +24,7 @@ const RoomLobby: React.FC = () => {
     const router = useRouter();
     const params = useParams();
     const room_code = params.room_code;
+
     const authToken = Cookies.get('authToken');
 
     const [index, setIndex] = useState(0);
@@ -93,7 +94,7 @@ const RoomLobby: React.FC = () => {
             const message = JSON.parse(event.data);
             switch (message.type) {
                 case 'game.redirect':
-                    router.push(`/game/mathgame`);  // Navigate to minigame page
+                    router.push(`/game/mathgame/${room_code}`);  // Navigate to minigame page
                     break;
                 case 'user_update':
                     setUsers(message.users);

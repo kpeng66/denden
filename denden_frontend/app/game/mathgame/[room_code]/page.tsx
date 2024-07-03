@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
-import styles from '../../../styles/sum.module.css';
+import styles from '../../../../styles/sum.module.css';
 import Scoreboard from '@/components/scoreboard';
-import { Player } from '@/types/types';
 import Cookies from 'js-cookie';
 
 // Math Sum Game Component
@@ -13,6 +12,7 @@ import Cookies from 'js-cookie';
 const MathGame: React.FC = () => {
     const params = useParams();
     const room_code = params.room_code;
+
     const authToken = Cookies.get('authToken');
 
     const [equation, setEquation] = useState('');
@@ -22,7 +22,6 @@ const MathGame: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
 
     const [gameOver, setGameOver] = useState<boolean>(false);
-    const [players, setPlayers] = useState<Player[]>([]);
     const [currentGameId, setCurrentGameId] = useState(null);
 
     const [ws, setWs] = useState<WebSocket | null>(null);
@@ -52,7 +51,7 @@ const MathGame: React.FC = () => {
         };
         
         return () => wsConnection.close();
-    }, []);
+    }, [room_code]);
 
     // useEffect for game logic
     useEffect(() => {
@@ -141,7 +140,7 @@ const MathGame: React.FC = () => {
 
     const updatePlayerScore = async (score: number) => {
       try {
-        const response = await axios.post(`http://127.0.0.1:8000/api/update-player-score/}`, { score }, {
+        const response = await axios.post(`http://127.0.0.1:8000/api/update-player-score`, { score }, {
           headers: { 'Authorization': `Bearer ${authToken}`}
         });
 
@@ -157,7 +156,7 @@ const MathGame: React.FC = () => {
     return (
         <div className={styles.gameContainer}>
           {gameOver ? (
-            <Scoreboard players={players} />
+            <Scoreboard room = {room_code} />
           ) : (
             <>
               <div className={styles.timer}>

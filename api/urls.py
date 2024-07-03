@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RoomView, CreateRoomView, GetRoom, JoinRoom, LeaveRoom, UpdateRoom, UsersInRoom, CurrentUser, StartGame, HandleAnswer, UserInARoom, GenerateEquation, HostDetails, UpdatePlayerScore, StartMathGame
+from .views import RoomView, CreateRoomView, GetRoom, JoinRoom, LeaveRoom, UpdateRoom, UsersInRoom, CurrentUser, StartGame, HandleAnswer, UserInARoom, GenerateEquation, HostDetails, UpdatePlayerScore, StartMathGame, RoomScores
 
 urlpatterns = [
     path('room', RoomView.as_view()),
@@ -16,5 +16,6 @@ urlpatterns = [
     path('check-answer', HandleAnswer.as_view()),
     path('check-user-in-room', UserInARoom.as_view()),
     path('update-player-score', UpdatePlayerScore.as_view()),
-    path('start-math-game', StartMathGame.as_view())
+    path('start-math-game', StartMathGame.as_view()),
+    path('room-scores/<str:room_code>/', RoomScores.as_view())
 ]

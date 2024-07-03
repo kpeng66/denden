@@ -4,6 +4,6 @@ export interface Player {
   }
   
 export interface ScoreboardProps {
-    players: Player[];
+    room: string | string[];
   }
   

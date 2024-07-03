@@ -319,4 +319,16 @@ class UpdatePlayerScore(APIView):
                     return JsonResponse({'message': 'Invalid score format'}, status=400)
             else:
                 return JsonResponse({'message': 'No score provided'}, status=400)
+            
+class RoomScores(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, room_code):
+        try:
+            room = Room.objects.get(code=room_code)
+            user_profiles = UserProfile.objects.filter(current_room=room)
+            serializer = UserProfileSerializer(user_profiles, many=True)
+            return Response(serializer.data)
+        except Room.DoesNotExist:
+            return Response({'error': 'Room not found'}, status=404)
 
