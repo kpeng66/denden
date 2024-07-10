@@ -82,7 +82,7 @@ const RoomLobby: React.FC = () => {
             fetchUsersInRoom();
         }
 
-        const wsConnection = new WebSocket(`ws://127.0.0.1:8000/ws/room/${room_code}`);
+        const wsConnection = new WebSocket(`ws://192.168.1.67:8000/ws/room/${room_code}`);
         setWs(wsConnection);
 
         wsConnection.onerror = (error) => {
