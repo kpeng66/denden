@@ -10,7 +10,7 @@ const CreateRoom: React.FC = () => {
 
     const getCurrentUser = async () => {
         const authToken = Cookies.get('authToken');
-        const response = await fetch('http://127.0.0.1:8000/api/get-current-user', { 
+        const response = await fetch('http://192.168.1.67:8000/api/get-current-user', { 
         headers: {
             'Authorization': `Bearer ${authToken}`
         }
@@ -34,7 +34,7 @@ const CreateRoom: React.FC = () => {
 
         
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/create-room', {
+            const response = await fetch('http://192.168.1.67:8000/api/create-room', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

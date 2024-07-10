@@ -60,7 +60,7 @@ const RoomLobby: React.FC = () => {
     const startGame = async () => {
         if (currentUserIsHost) {
             try {
-                const response = await axios.post('http://127.0.0.1:8000/api/start-math-game', {room_code: room_code}, { 
+                const response = await axios.post('http://192.168.1.67:8000/api/start-math-game', {room_code: room_code}, { 
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                 }
@@ -121,7 +121,7 @@ const RoomLobby: React.FC = () => {
 
     const fetchUsersInRoom = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/list-users-in-room/${room_code}`);
+            const response = await fetch(`http://192.168.1.67:8000/api/list-users-in-room/${room_code}`);
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data);
@@ -135,7 +135,7 @@ const RoomLobby: React.FC = () => {
 
     const fetchCurrentUser = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/get-current-user`, {
+            const response = await fetch(`http://192.168.1.67:8000/api/get-current-user`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -153,7 +153,7 @@ const RoomLobby: React.FC = () => {
 
     const fetchHostDetails = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/host-details/${room_code}`);
+            const response = await fetch(`http://192.168.1.67:8000/api/host-details/${room_code}`);
             if (response.ok) {
                 const data = await response.json();
                 setHostId(data.host_id);
@@ -167,7 +167,7 @@ const RoomLobby: React.FC = () => {
 
     const leaveRoom = async () => {
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/leave-room', {room_code: room_code}, { 
+            const response = await axios.post('http://192.168.1.67:8000/api/leave-room', {room_code: room_code}, { 
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                 }

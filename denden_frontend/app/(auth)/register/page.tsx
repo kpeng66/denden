@@ -25,7 +25,7 @@ const Register: React.FC = () => {
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://127.0.0.1:8000/auth/users/', formData);
+            const response = await axios.post('http://192.168.1.67:8000/auth/users/', formData);
             if (response.data) {
                 console.log("Registered successfully");
                 toast.success("Registered successfully")

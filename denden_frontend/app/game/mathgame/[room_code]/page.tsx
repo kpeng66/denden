@@ -88,7 +88,7 @@ const MathGame: React.FC = () => {
     }, [preGameCountdown, countdown, score]);  
 
     const fetchNewEquation = async () => {
-        const response = await axios.get('http://127.0.0.1:8000/api/get-new-equation');
+        const response = await axios.get('http://192.168.1.67:8000/api/get-new-equation');
         setEquation(response.data.equation);
         setInputValue("");
     };
@@ -114,7 +114,7 @@ const MathGame: React.FC = () => {
     const handleAnswer = async (userInput?: string) => {
         const userAnswer = userInput
         try {
-            const response = await axios.post("http://127.0.0.1:8000/api/check-answer", {
+            const response = await axios.post("http://192.168.1.67:8000/api/check-answer", {
                 original_equation: equation,
                 user_answer: userAnswer
             });
@@ -140,7 +140,7 @@ const MathGame: React.FC = () => {
 
     const updatePlayerScore = async (score: number) => {
       try {
-        const response = await axios.post(`http://127.0.0.1:8000/api/update-player-score`, { score }, {
+        const response = await axios.post(`http://192.168.1.67:8000/api/update-player-score`, { score }, {
           headers: { 'Authorization': `Bearer ${authToken}`}
         });
 

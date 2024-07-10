@@ -18,7 +18,7 @@ const JoinRoom: React.FC = () => {
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         try {
-          const response = await axios.post('http://127.0.0.1:8000/api/join-room', 
+          const response = await axios.post('http://192.168.1.67:8000/api/join-room', 
           { room_code: roomCode }, 
           { 
               headers: {

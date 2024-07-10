@@ -34,7 +34,7 @@ const HomePage: React.FC = () => {
         const checkRoom = async () => {
             try {
                 const username = Cookies.get('username');
-                const response = await axios.post("http://127.0.0.1:8000/api/check-user-in-room", { username });
+                const response = await axios.post("http://192.168.1.67:8000/api/check-user-in-room", { username });
 
                 if (response.data.in_room) {
                     router.push(`/room/${response.data.room_code}`);

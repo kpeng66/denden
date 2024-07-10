@@ -24,12 +24,12 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/auth/jwt/create/', formData);
+      const response = await axios.post('http://192.168.1.67:8000/auth/jwt/create/', formData);
       if (response.data && response.data.access) {
         Cookies.set('authToken', response.data.access); // Store JWT in a cookie
         // console.log("Username set:", Cookies.get('username'));
 
-        const userDetails = await axios.get('http://127.0.0.1:8000/auth/users/me/', {
+        const userDetails = await axios.get('http://192.168.1.67:8000/auth/users/me/', {
         headers: {
             'Authorization': `Bearer ${response.data.access}`
         }
