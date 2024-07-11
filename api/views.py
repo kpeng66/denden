@@ -332,3 +332,19 @@ class RoomScores(APIView):
         except Room.DoesNotExist:
             return Response({'error': 'Room not found'}, status=404)
 
+class DeleteMathGame(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            game_id = request.data.get('game_id')
+            game = MathGame.objects.get(id=game_id)
+
+            game.delete()
+            return JsonResponse({'success': 'Game deleted'})
+        except MathGame.DoesNotExist:
+            return JsonResponse({'error': 'Game not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
