@@ -24,16 +24,17 @@ const RoomLobby: React.FC = () => {
     const router = useRouter();
     const params = useParams();
     const room_code = params.room_code;
-
     const authToken = Cookies.get('authToken');
 
     const [index, setIndex] = useState(0);
+    const [selectedGameId, setSelectedGameId] = useState<number | null>(null); // state to manage selected game ID
+
     const [ws, setWs] = useState<WebSocket | null>(null);
+
     const [users, setUsers] = useState<User[]>([]);
     const [hostId, setHostId] = useState<number| null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [currentUserIsHost, setCurrentUserIsHost] = useState<boolean>(false);
-    const [selectedGameId, setSelectedGameId] = useState<number | null>(null); // state to manage selected game ID
 
     const gamesList = [
         { name: "Math Add Game", id: 0, color: "#FFD700" },
@@ -41,6 +42,7 @@ const RoomLobby: React.FC = () => {
         { name: "Game #3", id: 2, color: "4682B4"}
     ];
 
+    /* Swipeable View Logic */
     const selectGame = (gameId: number) => {
         setSelectedGameId(gameId)
     }
@@ -56,7 +58,50 @@ const RoomLobby: React.FC = () => {
 
         setIndex(index)
     }
-    
+
+    /* Websocket Logic */
+    useEffect(() => {
+        const wsConnection = new WebSocket(`ws://192.168.1.67:8000/ws/room/${room_code}`);
+        setWs(wsConnection);
+
+        wsConnection.onerror = (error) => {
+            console.error("WebSocket Error", error);
+        };
+
+        wsConnection.onmessage = (event) => {
+            console.log("ws message sent")
+            const message = JSON.parse(event.data);
+            switch (message.type) {
+                case 'game.redirect':
+                    console.log('Redirect message received');
+                    router.push(`/game/mathgame/${room_code}`);
+                    break;
+                case 'user_update':
+                    setUsers(message.users);
+                    break;
+                case 'room_closed': 
+                    alert(message.message);
+                    router.push('/');
+            }
+        };
+
+        return () => {
+            console.log("ws closed")
+            wsConnection.close();
+        }
+    }, [room_code]);
+
+    useEffect(() => {
+        if (room_code) {
+            fetchUsersInRoom();
+            fetchHostDetails();
+            fetchCurrentUser();
+            setCurrentUserIsHost(currentUserId === hostId);
+        }
+    }, [currentUserIsHost, hostId, currentUserId])
+
+
+    /* Start Game Logic */
     const startGame = async () => {
         if (currentUserIsHost) {
             try {
@@ -76,48 +121,6 @@ const RoomLobby: React.FC = () => {
             }
         }
     };
-
-    useEffect(() => {
-        if (room_code) {
-            fetchUsersInRoom();
-        }
-
-        const wsConnection = new WebSocket(`ws://192.168.1.67:8000/ws/room/${room_code}`);
-        setWs(wsConnection);
-
-        wsConnection.onerror = (error) => {
-            console.error("WebSocket Error", error);
-        };
-
-        wsConnection.onmessage = (event) => {
-            console.log("ws message sent")
-            const message = JSON.parse(event.data);
-            switch (message.type) {
-                case 'game.redirect':
-                    router.push(`/game/mathgame/${room_code}`);  // Navigate to minigame page
-                    break;
-                case 'user_update':
-                    setUsers(message.users);
-                    break;
-                case 'room_closed': 
-                    alert(message.message);
-                    router.push('/');
-            }
-        };
-
-        return () => {
-            console.log("ws closed")
-            wsConnection.close();
-        }
-    }, [room_code]);
-
-    useEffect(() => {
-        if (room_code) {
-            fetchHostDetails();
-            fetchCurrentUser();
-            setCurrentUserIsHost(currentUserId === hostId);
-        }
-    }, [currentUserIsHost, hostId, currentUserId])
 
     const fetchUsersInRoom = async () => {
         try {
@@ -181,32 +184,6 @@ const RoomLobby: React.FC = () => {
             console.error('Error leaving room: try');
         }
     };
-    
-    const styles = {
-        slideContainer: {
-          padding: 15,
-          minHeight: '100vh', // Make each slide full height
-          color: '#fff',
-        },
-        gameListContainer: {
-          backgroundColor: '#f7f7f7', // Light grey background
-          borderRadius: '25px', // Rounded corners
-          margin: '0 15px', // Some margin on the sides
-        },
-        gameButton: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          padding: '20px',
-          marginBottom: '10px',
-          backgroundColor: '#fff',
-          borderRadius: '15px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Slight shadow
-          color: 'black',
-          textDecoration: 'none',
-        },
-        // ... Add more styles for your elements
-      };
 
     return (
         <div>

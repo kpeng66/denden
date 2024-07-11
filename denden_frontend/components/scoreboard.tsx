@@ -13,11 +13,10 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ room }) => {
 
     const authToken = Cookies.get('authToken');
 
-
     useEffect(() => {
         const fetchScores = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:8000/api/room-scores/${room}`, {
+                const response = await axios.get(`http://192.168.1.67:8000/api/room-scores/${room}`, {
                     headers: { 'Authorization': `Bearer ${authToken}`}
                 }
                 )
@@ -32,9 +31,43 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ room }) => {
         fetchScores();
     }, [room]);
 
-    const handleConfirmButton = () => {
+    const updatePlayerScore = async (score: number) => {
+        try {
+          const response = await axios.post(`http://192.168.1.67:8000/api/update-player-score`, { score }, {
+            headers: { 'Authorization': `Bearer ${authToken}`}
+          });
+  
+          if (response.data) {
+            console.log('Score updated:', response.data)
+          }
+  
+        } catch (error) {
+          console.error('Error updating score:', error)
+        }
+      }
 
-       router.push('/');
+      const handleDeleteGame = async (gameId: number) => {
+        try {
+            const response = await axios.post(`http://192.168.1.67:8000/api/delete-math-game`, {
+                game_id: gameId,
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                }
+            });
+            console.log("Game deletion response", response.data)
+        } catch (error) {
+            console.error('Error deleting the game: ', error);
+        }
+      }
+
+    const handleConfirmButton = async () => {
+        /* Reset player's score */
+
+        
+        /* Delete math game instance */
+        
+        router.push('/');
     }
 
     return (
