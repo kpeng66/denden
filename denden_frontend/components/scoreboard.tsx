@@ -61,12 +61,32 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ room }) => {
         }
       }
 
+      const getGameId = async () => {
+        try {
+            const response = await axios.get(`http://192.168.1.67:8000/api/get-game-from-room/${room}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                }
+            });
+            console.log('Game ID:', response.data.game_id);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching game ID', error);
+            return null;
+        }
+      }
+
     const handleConfirmButton = async () => {
         /* Reset player's score */
-
-        
+        await updatePlayerScore(0);
         /* Delete math game instance */
-        
+        const gameData = await getGameId();
+        if (gameData && gameData.game_id) {
+            await handleDeleteGame(gameData.game_id);
+        } else {
+            console.error('No game found to delete or failed to retrieve game ID.');
+        }
+
         router.push('/');
     }
 
@@ -74,7 +94,10 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ room }) => {
         <div className={styles.scoreboardContainer}>
             <div className={styles.title}>Scoreboard</div>
             <div className={styles.scoreList}>
-            {players.map((player, index) => (
+            {players
+            .slice()
+            .sort((a, b) => b['score'] - a['score'])
+            .map((player, index) => (
                     <div key={index} className={styles.playerScore}>
                         <div className={styles.playerName}>{player['user_name']}</div>
                         <div className={styles.playerScoreValue}>{player['score']}</div>

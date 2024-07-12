@@ -349,4 +349,21 @@ class DeleteMathGame(APIView):
             return JsonResponse({'error': 'Game not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+        
+class GetGameFromRoom(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, room_code):
+        try:
+            room = Room.objects.get(code=room_code)
+
+            if room.game:
+                return JsonResponse({
+                    'game_id': room.game.id,
+                    'game_type': room.content_type.model,
+                    'status': 'success'
+                })
+            else:
+                return JsonResponse({'error': 'No game linked to this room'}, status=404)
+        except Room.DoesNotExist:
+            return JsonResponse({'error': 'Room not found'}, status=404)
