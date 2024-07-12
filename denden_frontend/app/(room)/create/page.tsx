@@ -31,7 +31,6 @@ const CreateRoom: React.FC = () => {
         if (!user) {
             console.error("Could not get current user")
         }
-
         
         try {
             const response = await fetch('http://192.168.1.67:8000/api/create-room', {
@@ -67,7 +66,6 @@ const CreateRoom: React.FC = () => {
         <div className="min-h-screen flex flex-col justify-center items-center bg-background text-foreground">
             <h1 className="text-4xl mb-8">Create Room</h1>
             <Button onClick={handleCreateRoom}>Create New Room</Button>
-            {/* Here you can also display the list of rooms if needed */}
         </div>
     );
 }

@@ -96,6 +96,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
+        print(f"Websocket successfully connected in Room {self.room_code}")
+
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.room_group_name,

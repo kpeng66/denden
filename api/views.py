@@ -204,15 +204,18 @@ class StartMathGame(APIView):
             if MathGame.objects.filter(room=room).exists():
                 return Response({'error': 'A game is already active in this room'}, status=400)
             else:
-                new_game = MathGame.objects.create(room=room, name='New Math Game')
+                math_game = MathGame.objects.create(room=room, name='New Math Game')
 
-            return Response({'message': 'Game started successfully', 'game_id': new_game.id})
+                room.content_type = ContentType.objects.get_for_model(MathGame)
+                room.object_id = math_game.id
+                room.save()
+
+            return Response({'message': 'Game started successfully', 'game_id': math_game.id})
         except Room.DoesNotExist:
             return Response({'error': 'Invalid room code'}, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-        
 class UserInARoom(APIView):
     def post(self, request):
             try:
@@ -346,5 +349,4 @@ class DeleteMathGame(APIView):
             return JsonResponse({'error': 'Game not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-
 

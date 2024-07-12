@@ -62,6 +62,8 @@ const RoomLobby: React.FC = () => {
     /* Websocket Logic */
     useEffect(() => {
         const wsConnection = new WebSocket(`ws://192.168.1.67:8000/ws/room/${room_code}`);
+        wsConnection.onopen = () => console.log("WebSocket connection successfully opened.");
+
         setWs(wsConnection);
 
         wsConnection.onerror = (error) => {
@@ -112,8 +114,13 @@ const RoomLobby: React.FC = () => {
             });
                 if (response.data && response.data.game_id) {
                     console.log('Game started with ID: ', response.data.game_id);
+                    
                     if (ws) {
-                        ws.send(JSON.stringify({'type': 'game.redirect', 'game_id': response.data.game_id, 'room_code': room_code}));
+                        ws.send(JSON.stringify({
+                            'type': 'game.redirect', 
+                            'game_id': response.data.game_id,
+                            'room_code': room_code
+                        }));
                     }
                 }
             } catch (error) {

@@ -1,8 +1,8 @@
 from django.db import models
 import string
 import random
-from django.contrib.auth.models import User  # Import the default user model
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
 def generate_unique_code():
@@ -20,6 +20,10 @@ class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     players = models.ManyToManyField(User, related_name='rooms')
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    game = GenericForeignKey('content_type', 'object_id')
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="userprofile")
