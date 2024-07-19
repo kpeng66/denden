@@ -91,7 +91,7 @@ const RoomLobby: React.FC = () => {
             console.log("ws closed")
             wsConnection.close();
         }
-    }, [room_code]);
+    }, []);
 
     useEffect(() => {
         if (room_code) {

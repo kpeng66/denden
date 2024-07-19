@@ -9,12 +9,13 @@ import asyncio
 
 class MathGameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        print("MathGameConsumer", "Connected")
+
         self.user_id = self.scope['user'].id
 
         self.room_code = self.scope['url_route']['kwargs']['room_code']
         self.room_group_name = f'room_{self.room_code}'
 
-        # Add this channel to the group, facilitating broadcast messages
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -27,10 +28,19 @@ class MathGameConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message_type = text_data_json.get('type')
+
+        if message_type == 'start_game':
+            await self.start_game()
     
     async def start_game(self):
         game_prepare_time = 3
         game_time = 10
+
+        print("Consumers", "start_game started")
 
         for i in range(game_prepare_time, 0, -1):
             await self.channel_layer.group_send(
@@ -40,6 +50,7 @@ class MathGameConsumer(AsyncWebsocketConsumer):
                     'countdown_time': i
                 }
             )
+            print("Consumers", f"Pregame Countdown: {i}")
             await asyncio.sleep(1)
 
         await self.channel_layer.group_send(

@@ -184,6 +184,8 @@ class StartGame(APIView):
             room.current_game = game
             room.save()
 
+            print("Views", "MathGame successfully created")
+
             return JsonResponse({"message": "Game started"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
