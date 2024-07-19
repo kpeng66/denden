@@ -23,7 +23,6 @@ class MathGameConsumer(AsyncWebsocketConsumer):
         await self.accept()
     
     async def disconnect(self, close_code):
-        # Remove this channel from the group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
@@ -31,8 +30,8 @@ class MathGameConsumer(AsyncWebsocketConsumer):
     
     async def start_game(self):
         game_prepare_time = 3
-        
-        # Notify all clients about the countdown and start
+        game_time = 10
+
         for i in range(game_prepare_time, 0, -1):
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -49,40 +48,45 @@ class MathGameConsumer(AsyncWebsocketConsumer):
                 'type': 'game.start',
             }
         )
+
+        for i in range(game_time, 0, -1):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game.timer',
+                    'timer': i
+                }
+            )
+            await asyncio.sleep(1)
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'game.end',
+            }
+        )
     
     async def game_countdown(self, event):
-        # Send countdown to the specific user
         await self.send(text_data=json.dumps({
             'type': 'game.countdown',
             'countdown_time': event['countdown_time']
         }))
 
     async def game_start(self, event):
-        # Send game start signal to the specific user
         await self.send(text_data=json.dumps({
             'type': 'game.start'
         }))
 
-    async def broadcast_scores(self):
-        scores = await self.get_scores()
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'game.scores',
-                'scores': scores
-            }
-        )
-
-    @database_sync_to_async
-    def get_scores(self):
-        pass
-    
-    async def game_scores(self, event):
+    async def game_timer(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'game.scores',
-            'scores': event['scores']
+            'type': 'game.timer',
+            'timer': event['timer']
         }))
 
+    async def game_end(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'game.end'
+        }))
 
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
