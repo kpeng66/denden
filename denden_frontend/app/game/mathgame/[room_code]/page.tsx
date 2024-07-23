@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 import styles from '../../../../styles/sum.module.css';
@@ -35,37 +35,47 @@ const MathGame: React.FC = () => {
         setWs(wsConnection);
 
         wsConnection.onopen = () => {
-          console.log("Websocket connection successfully opened.");
+          console.log("MathGame Websocket connection successfully opened.");
           wsConnection.send(JSON.stringify({
-            'type': 'start_game',
+            'type': 'trigger_game_start',
           }));
         }
 
         wsConnection.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            switch (message.type) {
-                case 'game.countdown':
-                    setPreGameCountdown(message.countdown_time);
-                    break;
-                case 'game.start':
-                    setPreGameCountdown(null);
-                    startGame();
-                    fetchNewEquation();
-                    break;
-                case 'game.timer':
-                  setTimer(message.timer);
-                  break;
-                case 'game.end':
-                  setTimer(0);
-                  endGame();
-                  break;
-                default:
-                  break;
-            }
+            console.log(`Websocket message received at ${new Date().toISOString()}:`, message);
+
+            handleWebsocketMessage(message);
         };
         
-        return () => wsConnection.close();
-    }, []);
+        return () => {
+          console.log("Cleaning up Websocket connection");
+          wsConnection.close();
+        }
+    }, [room_code]);
+
+    const handleWebsocketMessage = (message: any) => {
+      switch (message.type) {
+        case 'game.countdown':
+            console.log(`Countdown message received at ${new Date().toISOString()}`)
+            setPreGameCountdown(message.countdown_time);
+            break;
+        case 'game.start':
+            setPreGameCountdown(null);
+            startGame();
+            fetchNewEquation();
+            break;
+        case 'game.timer':
+          setTimer(message.timer);
+          break;
+        case 'game.end':
+          setTimer(0);
+          endGame();
+          break;
+        default:
+          break;
+      }
+    }
 
     const fetchNewEquation = async () => {
         const response = await axios.get('http://192.168.1.67:8000/api/get-new-equation');
@@ -88,7 +98,6 @@ const MathGame: React.FC = () => {
         if (newInputValue.length === answerLength) {
             handleAnswer(newInputValue);
         }
-
     };
 
     const handleAnswer = async (userInput?: string) => {
@@ -113,7 +122,7 @@ const MathGame: React.FC = () => {
     
     return (
         <div className={styles.gameContainer}>
-          {gameOver ? (
+          {false ? (
             <Scoreboard room = {room_code} />
           ) : (
             <>

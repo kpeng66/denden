@@ -62,7 +62,7 @@ const RoomLobby: React.FC = () => {
     /* Websocket Logic */
     useEffect(() => {
         const wsConnection = new WebSocket(`ws://192.168.1.67:8000/ws/room/${room_code}`);
-        wsConnection.onopen = () => console.log("WebSocket connection successfully opened.");
+        wsConnection.onopen = () => console.log("Room WebSocket connection successfully opened.");
 
         setWs(wsConnection);
 
@@ -104,6 +104,7 @@ const RoomLobby: React.FC = () => {
 
 
     /* Start Game Logic */
+    /*
     const startGame = async () => {
         if (currentUserIsHost) {
             try {
@@ -128,6 +129,21 @@ const RoomLobby: React.FC = () => {
             }
         }
     };
+    */
+
+    const startGame = async () => {
+        if (ws) {
+            console.log("Host clicked start game")
+            ws.send(JSON.stringify({
+                'type': 'trigger_game_start', 
+                'room_code': room_code
+            }));
+
+            ws.close();
+            console.log("Room Websocket closed after game start.");
+            router.push(`/game/mathgame/${room_code}`);
+            }
+        }
 
     const fetchUsersInRoom = async () => {
         try {
