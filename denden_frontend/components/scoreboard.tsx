@@ -82,7 +82,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ room }) => {
         /* Delete math game instance */
         const gameData = await getGameId();
         if (gameData && gameData.game_id) {
-            await handleDeleteGame(gameData.game_id);
+            // await handleDeleteGame(gameData.game_id);
         } else {
             console.error('No game found to delete or failed to retrieve game ID.');
         }

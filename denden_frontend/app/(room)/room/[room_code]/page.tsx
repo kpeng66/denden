@@ -75,8 +75,8 @@ const RoomLobby: React.FC = () => {
             const message = JSON.parse(event.data);
             switch (message.type) {
                 case 'game.redirect':
-                    console.log('Redirect message received');
-                    router.push(`/game/mathgame/${room_code}`);
+                    console.log('Redirect to game page received');
+                    router.push(message.url);
                     break;
                 case 'user_update':
                     setUsers(message.users);
@@ -102,46 +102,12 @@ const RoomLobby: React.FC = () => {
         }
     }, [currentUserIsHost, hostId, currentUserId])
 
-
-    /* Start Game Logic */
-    /*
-    const startGame = async () => {
-        if (currentUserIsHost) {
-            try {
-                const response = await axios.post('http://192.168.1.67:8000/api/start-math-game', {room_code: room_code}, { 
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                }
-            });
-                if (response.data && response.data.game_id) {
-                    console.log('Game started with ID: ', response.data.game_id);
-                    
-                    if (ws) {
-                        ws.send(JSON.stringify({
-                            'type': 'game.redirect', 
-                            'game_id': response.data.game_id,
-                            'room_code': room_code
-                        }));
-                    }
-                }
-            } catch (error) {
-                console.error('Error starting the game:', error);
-            }
-        }
-    };
-    */
-
     const startGame = async () => {
         if (ws) {
             console.log("Host clicked start game")
             ws.send(JSON.stringify({
-                'type': 'trigger_game_start', 
-                'room_code': room_code
+                'type': 'trigger.game.start'            
             }));
-
-            ws.close();
-            console.log("Room Websocket closed after game start.");
-            router.push(`/game/mathgame/${room_code}`);
             }
         }
 

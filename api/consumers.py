@@ -36,8 +36,8 @@ class MathGameConsumer(AsyncWebsocketConsumer):
         if message_type == 'start_game':
             print("Start_game message received by MathGame Consumer")
             await self.start_countdown()
-        elif message_type == 'trigger_game_start':
-            print("Trigger_game_start message received by MathGame Consumer")
+        elif message_type == 'trigger.game.start':
+            print("Trigger.game.start message received by MathGame Consumer")
             await self.start_countdown()
     
     async def start_countdown(self):
@@ -53,43 +53,30 @@ class MathGameConsumer(AsyncWebsocketConsumer):
         
         print("Pregame Countdown finished")
 
+        await self.send(text_data=json.dumps({
+            'type': 'game.countdown',
+            'countdown_time': None
+        }))
+
+        await self.start_game()
+
     async def start_game(self):
         game_time = 10
 
         print("Consumers", "Game timer started")
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'game.start',
-            }
-        )
+        await self.send(text_data=json.dumps({
+            'type': 'game.start',
+        }))
 
         for i in range(game_time, 0, -1):
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'game.timer',
-                    'timer': i
-                }
-            )
+            await self.send(text_data=json.dumps({
+                'type': 'game.timer',
+                'timer': i
+            }))
             print("Consumers", f"Game Timer: {i}")
             await asyncio.sleep(1)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'game.end',
-            }
-        )
-
-    async def game_timer(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'game.timer',
-            'timer': event['timer']
-        }))
-
-    async def game_end(self, event):
         await self.send(text_data=json.dumps({
             'type': 'game.end'
         }))
@@ -120,12 +107,21 @@ class RoomConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message_type = text_data_json.get('type')
 
-        if message_type == 'game.redirect':
-            await self.redirect_game()
-        elif message_type == 'trigger_game_start':
-            print("Trigger_game_start message received by Room Consumer")
-            # await self.start_game()
-            await self.close()
+        if message_type == 'trigger.game.start':
+            print("Trigger.game.start message received by Room Consumer")
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game.redirect',
+                    'room_code': self.room_code
+                }
+            )
+    
+    async def game_redirect(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'game.redirect',
+            'url': f'/game/mathgame/{event["room_code"]}'
+        }))
     
     async def start_game(self):
         print("Start game function started by Room Consumer")
