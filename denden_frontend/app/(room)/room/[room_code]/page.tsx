@@ -27,10 +27,8 @@ const RoomLobby: React.FC = () => {
   const authToken = Cookies.get("authToken");
 
   const [index, setIndex] = useState(0);
-  const [selectedGameId, setSelectedGameId] = useState<number | null>(null); // state to manage selected game ID
-
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
-
   const [users, setUsers] = useState<User[]>([]);
   const [hostId, setHostId] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -66,44 +64,49 @@ const RoomLobby: React.FC = () => {
     );
     wsConnection.onopen = () =>
       console.log("Room WebSocket connection successfully opened.");
-
-    setWs(wsConnection);
-
+    wsConnection.onclose = () =>
+      console.log("Room Websocket connection closed.");
     wsConnection.onerror = (error) => {
-      console.error("WebSocket Error", error);
+      console.error("Room WebSocket Error", error);
     };
-
     wsConnection.onmessage = (event) => {
-      console.log("ws message sent");
-      const message = JSON.parse(event.data);
-      switch (message.type) {
-        case "game.redirect":
-          console.log("Redirect to game page received");
-          router.push(message.url);
-          break;
-        case "user_update":
-          setUsers(message.users);
-          break;
-        case "room_closed":
-          alert(message.message);
-          router.push("/");
-      }
+      handleWebsocketMessages(event);
     };
-
     return () => {
-      console.log("ws closed");
       wsConnection.close();
     };
-  }, []);
+  }, [room_code]);
+
+  const handleWebsocketMessages = (event: MessageEvent) => {
+    const message = JSON.parse(event.data);
+    switch (message.type) {
+      case "game.redirect":
+        router.push(message.url);
+        break;
+      case "user_update":
+        setUsers(message.users);
+        break;
+      case "room_closed":
+        alert(message.message);
+        router.push("/");
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomDetails();
+  }, [room_code]);
+
+  const fetchRoomDetails = async () => {
+    fetchUsersInRoom();
+    fetchHostDetails();
+    fetchCurrentUser();
+  };
 
   useEffect(() => {
     if (room_code) {
-      fetchUsersInRoom();
-      fetchHostDetails();
-      fetchCurrentUser();
       setCurrentUserIsHost(currentUserId === hostId);
     }
-  }, [currentUserIsHost, hostId, currentUserId]);
+  }, [hostId]);
 
   const startGame = async () => {
     if (ws) {
@@ -124,6 +127,7 @@ const RoomLobby: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
+        console.log(`Users in room...${users}`);
       } else {
         console.error("Error fetching users in room:", await response.text());
       }
@@ -194,51 +198,42 @@ const RoomLobby: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="p-4">
       {selectedGameId === null ? (
         <SwipeableViews
           index={index}
-          onChangeIndex={handleIndexChange}
+          onChangeIndex={setIndex}
           enableMouseEvents
         >
-          {/* First view: Room Details */}
-          <div className="min-h-screen flex items-center justify-center bg-gray-200">
-            <div className="bg-white p-6 rounded-xl shadow-2xl max-w-xl w-full">
-              <h1 className="text-4xl mb-2 text-center text-blue-600 font-bold">
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+              <h1 className="text-2xl font-bold mb-4">
                 Room Code: {room_code}
               </h1>
-              <div className="border-t border-gray-300 mt-4 py-4">
-                <h2 className="text-2xl mb-4 text-gray-700 font-semibold">
-                  Players:
-                </h2>
-                <ul>
-                  {users.map((user, index) => (
-                    <li
-                      key={index}
-                      className="mb-2 px-4 py-2 bg-gray-100 rounded-md shadow-sm text-gray-800"
-                    >
-                      {user.username}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
+              <h2 className="text-xl font-semibold">Players:</h2>
+              <ul className="mt-2">
+                {users.map((user, index) => (
+                  <li key={index} className="p-2 my-1 bg-gray-100 rounded-md">
+                    {user.username}
+                  </li>
+                ))}
+              </ul>
               <button
-                className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition ease-in-out duration-200 transform hover:scale-105"
-                onClick={leaveRoom}
+                onClick={() => router.push("/")}
+                className="mt-4 btn btn-primary"
               >
                 Leave Room
               </button>
             </div>
           </div>
 
-          {/* Second view: Game List */}
-          <div className="min-h-screen flex items-center justify-center bg-gray-200">
-            <div className="bg-white p-6 rounded-xl shadow-2xl max-w-xl w-full">
-              {gamesList.map((game, index) => (
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+              {gamesList.map((game) => (
                 <button
-                  className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition ease-in-out duration-200 transform hover:scale-105"
-                  key={index}
+                  key={game.id}
+                  style={{ backgroundColor: game.color }}
+                  className="mt-4 w-full py-2 rounded-md text-white font-medium"
                   onClick={() => selectGame(game.id)}
                 >
                   {game.name}
@@ -248,19 +243,15 @@ const RoomLobby: React.FC = () => {
           </div>
         </SwipeableViews>
       ) : (
-        <div className="min-h-screen flex items-center justify-center bg-gray-200">
+        <div className="flex flex-col items-center justify-center min-h-screen">
           {currentUserIsHost && (
-            <button
-              className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition ease-in-out duration-200 transform hover:scale-105"
-              onClick={startGame}
-            >
+            <button className="btn btn-success" onClick={startGame}>
               Start Game
             </button>
           )}
-
           <button
-            className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition ease-in-out duration-200 transform hover:scale-105"
-            onClick={backToGameList}
+            className="btn btn-danger mt-4"
+            onClick={() => setSelectedGameId(null)}
           >
             Back
           </button>
